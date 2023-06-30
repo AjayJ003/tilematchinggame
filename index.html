@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tile-Matching</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sofia&display=swap" rel="stylesheet">
+    <style>
+*
+{
+    background-color: aquamarine;
+}
+
+/*font-grp*/
+@font-face {
+    font-family: 'BR';
+    src: url('fonts/Briella Rin.ttf');
+}
+
+@font-face {
+    font-family: 'GOS';
+    src: url('fonts/Game Of Squids.ttf');
+}
+
+/*button*/
+button{
+    padding: 5px 10px;
+    font-family: 'GOS', Courier, monospace;
+    font-size: 15px;
+    border-radius: 200px;
+    box-shadow: 4px 4px gray;
+    transition-duration: 1s;
+    color: black;
+    background-color: aqua;
+    margin-right: 15px;
+    margin-left: 15px;
+}
+
+button:hover{
+    padding: 4px 25px;
+    color: white;
+    background-color: lightslategrey;
+}
+
+@keyframes transition {
+    from{
+        opacity: 0;
+        transform: translateX(-100px);
+    }
+
+    to{
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/*container*/
+.outer_container{
+    display: grid;
+    justify-items: center;
+    grid-template-rows: auto auto auto auto;
+    grid-gap: 20px;
+    
+}
+
+.game_container{
+    display: grid;
+    grid-template-columns: 100px 100px 100px 100px ;
+    grid-template-rows: 100px 100px 100px 100px ;
+    grid-gap: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 25px;
+}
+
+/*Heading & timer*/
+.game_heading{
+    font-family: 'BR', Courier, monospace;
+    font-size: 35px;
+    padding: 5px 5px;
+    border-style: solid;
+    border-radius: 100px;
+    background-color: aqua;
+    box-shadow: 4px 4px gray;
+}
+
+.timer{
+    font-family: 'BR', Courier, monospace;
+    font-size: 20px;
+    padding: 5px 5px;
+    border-style: solid;
+    border-radius: 100px;
+    background-color: aqua;
+    box-shadow: 4px 4px gray;
+}
+
+/*CARD Display*/
+.card {
+    width: 100px;
+    height: 100px;
+    background-color: lightgray;
+    display: inline-block;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 24px;
+    line-height: 100px;
+    box-shadow: 4px 4px gray;
+
+}
+  
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f1f1f1;
+}
+   
+/* Leader board table definition */
+.leaderboard_Heading{
+    font-family: 'Sofia', Courier, monospace;
+    font-size: 20px;
+}
+
+.leaderboard {
+    background-color: #fff;
+    max-width: 500px;
+}
+  
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-family: 'Sofia', Courier, monospace;
+}
+  
+table th, table td {
+    padding: 10px;
+    text-align: left;
+}
+  
+table th {
+    background-color: #333;
+    color: #fff;
+}
+  
+table td {
+    border-bottom: 1px solid #ddd;
+}
+  
+table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+  
+table tr:hover {
+    background-color: #f5f5f5;
+}
+
+
+    </style>
+  </head>
+<body>
+  <div class="outer_container">
+      <div class="game_heading">Tile - Matching</div>
+      <div class="timer">Timer : 45</div>
+      <div class="game_container"></div>
+      <div class="class_button">
+        <button class="start_button" onclick=startTimer()>Start</button>
+        <button class="reset_button">Reset</button>
+        <button class="saveBtn">Pause</button>
+        <button class="loadBtn">Load</button>
+      </div>
+      <button class='button' onclick="togglefunction()">Show/Hide the leaderboard</button>
+      <div class="shlb">
+        <p class="leaderboard_Heading">Leaderboard</p>
+        <div class="leaderboard"></div>
+      </div>
+
+      
+  </div>
+  <script>
+    //image list for the 4x4 grid that contains 16-images
+//=>Two of each image,so inputed 8 images 
+//All image format is jpg
+const images = [
+    'image1.jpg',
+    'image2.jpg',
+    'image3.jpg',
+    'image4.jpg',
+    'image5.jpg',
+    'image6.jpg',
+    'FC.jpg',
+    'BC.jpg'
+  ];
+
+//game-status-var
+let gameStatusStarted= false;
+let gameStatusEnded = false;
+
+//card-selection-var
+let firstCard = null;
+let secondCard = null;
+
+//score-var
+let score = 0;
+
+//timer function
+let timerInterval;
+let seconds = 45;                                                     //seconds-Time_Change
+let time;
+
+//username input var
+let username;
+
+//username and score store
+let US_details = [];
+
+//players details
+let players = [];
+
+//audio for mouse click
+let audio_click = new Audio('audio/audio_click.mp3');
+
+//audio for victory
+let audio_victory = new Audio('audio/audio_victory.mp3')
+
+//createGame-function
+function createGame() {
+
+    const gameContainer = document.querySelector('.game_container');
+    gameContainer.innerHTML = '';
+    //concat_function.png - ref
+    //shuffle function - Fisher-Yates shuffle algorithm
+    const shuffledImages = shuffle(images.concat(images));
+    for (let i = 0; i < shuffledImages.length; i++) {
+      const card = document.createElement('div');
+      //setting {card} as the classname for the div of the image 
+      card.className = 'card';
+      //setting the image into the div.card
+      card.dataset.image = shuffledImages[i];
+      //initialize the event listener 
+      //operation-click
+      //function-flip_card
+      card.addEventListener('click', flip_card);
+      //adding the div.card into div.game_container
+      gameContainer.appendChild(card);
+    }
+
+    //class button display
+    const classButton = document.querySelector('.class_button')
+    classButton.style.display = 'flex';
+
+    //class start display 
+    const startButton = document.querySelector('.start_button');
+    startButton.style.display = 'block';
+
+    //inputing username using prompt
+    username = window.prompt('Enter your name?',('Guest'));
+
+}
+
+//flip_card-function
+function flip_card() {
+
+    //playing audio for each click
+    audio_click.play();
+
+    //checking whether game started or not
+    if (!gameStatusStarted) {
+      //changing game started status
+      gameStatusStarted= true;
+    }
+    
+
+    //changing the background settings
+    this.style.backgroundColor = 'white';
+    this.style.backgroundImage = `url(${this.dataset.image})`;
+  
+    if (!firstCard) {
+      firstCard = this;
+    } else if (!secondCard) {
+      secondCard = this;
+      
+      //checking if both the firstcard and secondcard image are same or not
+      if (firstCard.dataset.image === secondCard.dataset.image) {
+              //checking if both the firstcard and secondcard are 'FC.jpg' image
+        if (firstCard.dataset.image == 'FC.jpg' && secondCard.dataset.image == 'FC.jpg'){
+          //calling pauseTimer function
+          pauseTimer();
+          //calling startTimer function after 10000 milliseconds or 10 seconds
+          setTimeout(function() {
+            startTimer();
+          }, 10000); 
+        }
+              //checking if both the firstcard and secondcard are 'BC.jpg' image
+        if (firstCard.dataset.image == 'BC.jpg' && secondCard.dataset.image == 'BC.jpg'){
+            //bonus score inc
+            score+=5;
+        }
+
+        //score inc
+        score++;
+        //remove event listerner
+        firstCard.removeEventListener('click', flip_card);
+        secondCard.removeEventListener('click', flip_card);
+        //setting both the card as null
+        firstCard = null;
+        secondCard = null;
+        
+        //when score is equal to image length
+        if (score === images.length) {
+          //calling the endgame 
+          endGame();
+        }
+      } else {
+        //fliping the card back to place when both the image are not same
+        setTimeout(() => {
+          //changing the background settings
+          firstCard.style.backgroundColor = 'lightgray';
+          firstCard.style.backgroundImage = '';
+          secondCard.style.backgroundColor = 'lightgray';
+          secondCard.style.backgroundImage = '';
+          firstCard = null;
+          secondCard = null;
+        }, 1000);
+      }
+    }
+}
+ 
+//end-Game function
+function endGame() {
+    
+    //playing the audio named audio_victory
+    audio_victory.play()
+
+    //checking the game ended status
+    if (gameStatusEnded) return;
+    
+    //game-status-var
+    gameStatusEnded = true;
+
+    //timer
+    seconds=45;                                                         //seconds-Time_Change
+
+    //score display
+    const gameContainer = document.querySelector('.game_container');
+    gameContainer.innerHTML = 'Score : '+score;
+
+    //display changes
+    //reset button visible
+    const resetButton = document.querySelector('.reset_button');
+    resetButton.style.display = 'block';
+
+    //start button not-visible
+    const startButton = document.querySelector('.start_button');
+    startButton.style.display = 'none';
+
+    //timer not-visible
+    const timer = document.querySelector('.timer');
+    timer.style.display = 'none';
+
+    //calling the leaderboard function
+    lb();
+}
+
+//reset_game-function
+function reset_game() {
+    //re-intializing gamestatus
+    gameStatusStarted= false;
+    gameStatusEnded = false;
+    
+    //card-var's reseting
+    firstCard = null;
+    secondCard = null;
+    
+    //reseting the score
+    score = 0;
+    
+    //timer
+    seconds = 46;                                                    //seconds-Time_Change
+
+    //reset-button
+    const resetButton = document.querySelector('.reset_button');
+    resetButton.style.display = 'null';
+    
+    //timer-display
+    const timer = document.querySelector('.timer');
+    timer.style.display = 'block';
+    
+    //calling the main function
+    createGame();
+}
+  
+//Fisher-Yates shuffle algorithm
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+//timer-func
+//timer-setInterval-set
+function startTimer() {
+  timerInterval = setInterval(updateTimer, 1000);
+}
+
+//timer-dec-func
+function updateTimer() {                                            
+    //timer reduction
+    seconds--;
+    //checking if seconds is equal zero
+    if (seconds == 0){
+        //clearinterval for timerInterval
+        clearInterval(timerInterval);
+        //calling endGame function as the time ended
+        endGame();
+    }
+
+    //timer display 
+    const timerDisplay = document.querySelector(".timer");
+    //timer display update
+    timerDisplay.innerHTML='Timer : '+seconds;
+}
+
+//timer-clearInterval
+function pauseTimer() {
+  //clearing the timerInterval
+  clearInterval(timerInterval)
+}
+
+// Sort players by score in descending order
+const sortedPlayers = US_details.sort((a, b) => b.score - a.score);
+
+// Display leaderboard
+const leaderboard = document.querySelector(".leaderboard");
+const table = document.createElement("table");
+
+// Create table header
+const tableHeader = document.createElement("tr");
+tableHeader.innerHTML = "<th>Name</th><th>Score</th>";
+table.appendChild(tableHeader);
+
+//leaderboard display function
+function lb(){
+  //leader board content list
+    
+  players = [];
+  
+  let lastvalue = US_details.pop();
+  
+  players.push(lastvalue);
+  
+  US_details.push({
+    name: username,
+    score: score
+  });
+
+  // Create table rows for players
+  sortedPlayers.forEach(player => {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${player.name}</td><td>${player.score}</td>`;
+    table.appendChild(row);
+  });
+
+  // Append table to leaderboard
+  leaderboard.appendChild(table);
+}
+
+//calling the main game function
+createGame();
+
+//reset-button
+const resetButton = document.querySelector('.reset_button');
+//event listener for resetname
+//operation-click
+//function-reset_game
+resetButton.addEventListener('click', reset_game);
+
+//Leaderboard show/hide 
+//shlb const var creation
+const x = document.querySelector('.shlb');
+
+//setting the display as none 
+x.style.display = "none";
+
+//show/hide button function
+const togglefunction = () => {
+  //checking the display style of leaderboard
+  if (x.style.display !== "none") {
+    //setting the display as none 
+    x.style.display = "none";
+  } else {
+    //setting the display as block
+    x.style.display = "block";
+  }
+}
+
+// Get the save button and add an event listener
+const saveBtn = document.querySelector('.saveBtn');
+saveBtn.addEventListener('click', pausegame);
+
+// Get the load button and add an event listener
+const loadBtn = document.querySelector('.loadBtn');
+loadBtn.addEventListener('click', loadGame);
+
+// Save the game state
+function pausegame() {
+  // Define your game state data
+  const gameState = {
+    username : username,
+    score : score
+    // Add more properties as needed
+  };
+
+  // Store the game state in local storage as a JSON string
+  localStorage.setItem('gameState', JSON.stringify(gameState));
+  console.log('Game saved!');
+
+  time = seconds;
+  
+  pauseTimer();
+}
+
+// Load the game state
+function loadGame() {
+  // Retrieve the game state from local storage
+  const savedState = localStorage.getItem('gameState');
+
+  if (savedState) {
+    // Parse the JSON string back into an object
+    const gameState = JSON.parse(savedState);
+
+    // Restore the game state
+    // Example: Update the UI with the saved data
+    
+    seconds = time
+    startTimer();
+  } else {
+    console.log('No saved game state found.');
+  }
+}
+
+  </script>
+</html>

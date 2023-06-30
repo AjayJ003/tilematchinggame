@@ -41,3 +41,18 @@ use it for a limited amount of time, after that, the power-up card will expire,
 and the player will have to find another one to use its effect again.
 
 ● Implement sound effects for clicks and win.                                       {COMPLETED}
+
+Brownie points:
+
+● Implement a leaderboard using local storage to save the high scores of players.   {COMPLETED}
+
+● Implement a feature to choose the difficulty level of the game (easy, 
+medium, hard) with a corresponding number of cards on the board.
+
+● Use any API of your choice to display random images upon start of the 
+game.
+
+● Save the state of the game i.e., if the user pauses or closes the window and 
+opens again, he should be able to continue playing.                                 {semi-completion}
+
+● Make the website mobile responsive.
